@@ -115,15 +115,16 @@ fn main() {
             game.move_(motion);
         }
 
+        count += 1;
+        let mut full = false;
         if count > 50 {
             count = 0;
-            game1.tick();
-            game2.tick();
-            game1.add_garbage(game2.get_garbage());
-            game2.add_garbage(game1.get_garbage());
-        } else {
-            count += 1;
+            full = true;
         }
+        game1.tick(full);
+        game2.tick(full);
+        game1.add_garbage(game2.get_garbage());
+        game2.add_garbage(game1.get_garbage());
 
         render_at(2, 2, &game1);
         game1.finish_render();

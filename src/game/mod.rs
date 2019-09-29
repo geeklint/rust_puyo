@@ -111,7 +111,7 @@ impl Game {
         return value;
     }
 
-    pub fn tick(&mut self){
+    pub fn tick(&mut self, full: bool){
         if self.is_over() {
             return;
         }
@@ -121,7 +121,7 @@ impl Game {
         if self.check_rotation() {
             return;
         }
-        if self.check_drop() {
+        if self.check_drop(full) {
             return;
         }
         if self.check_gravity() {
@@ -257,11 +257,15 @@ impl Game {
         return valid;
     }
 
-    fn check_drop(&mut self) -> bool {
+    fn check_drop(&mut self, full: bool) -> bool {
         let mut puyo_pos = match &self.current {
             Some(current) => current.clone(),
             None => return false,
         };
+
+        if !full {
+            return true;
+        }
 
         let puyo_colors = self.swap_puyo(&puyo_pos, Puyo::empty());
         
