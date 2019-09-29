@@ -17,6 +17,7 @@ pub use render::Renderer;
 pub use util::Direction;
 
 pub struct Game {
+    is_over: bool,
     front_board: Vec<Vec<Color>>,
     board: Vec<Vec<Color>>,
     excluded_color: Color,
@@ -40,6 +41,7 @@ impl Game {
         let mut rng = rand::thread_rng();
         let excluded_color = Color::any(&mut rng);
         Game {
+            is_over: false,
             front_board: vec![vec![excluded_color; BOARD_WIDTH]; BOARD_HEIGHT],
             board: vec![vec![Empty; BOARD_WIDTH]; BOARD_HEIGHT],
             excluded_color,
@@ -55,10 +57,7 @@ impl Game {
     }
 
     pub fn is_over(&self) -> bool {
-        if let Some(_) = self.current {
-            return false;
-        }
-        return self.board[DROP_POS.y as usize][DROP_POS.x as usize] != Empty;
+        self.is_over
     }
 
     pub fn next_puyo(&self) -> (Color, Color) {
@@ -98,6 +97,10 @@ impl Game {
         }
     }
 
+    pub fn pending_garbage(&self) -> u32 {
+        self.incoming_garbage
+    }
+
     pub fn add_garbage(&mut self, amount: u32){
         self.incoming_garbage += amount;
     }
@@ -109,36 +112,30 @@ impl Game {
     }
 
     pub fn tick(&mut self){
-        print!("\x1b[2;12His_over");
         if self.is_over() {
             return;
         }
-        print!("\x1b[2;12Hcheck_motion");
         if self.check_motion() {
             return;
         }
-        print!("\x1b[2;12Hcheck_rotation");
         if self.check_rotation() {
             return;
         }
-        print!("\x1b[2;12Hcheck_drop");
         if self.check_drop() {
             return;
         }
-        print!("\x1b[2;12Hcheck_gravity");
         if self.check_gravity() {
             return;
         }
-        print!("\x1b[2;12Hcheck_chains");
         if self.check_chains() {
             return;
         }
-        self.outgoing_garbage += self.chain.convert_to_garbage();
-        print!("\x1b[2;12Hspawn_garbage");
+        if self.apply_score() {
+            return;
+        }
         if self.spawn_garbage() {
             return;
         }
-        print!("\x1b[2;12Hspawn_puyo");
         if self.spawn_puyo() {
             return;
         }
@@ -359,9 +356,26 @@ impl Game {
             }
         }
 
-        self.chain.end_cycle();
+        if any_cleared {
+            self.chain.end_cycle();
+        }
         
         return any_cleared;
+    }
+
+    fn apply_score(&mut self) -> bool {
+        //print!("\x1b[20;2HChain: {:?}", self.chain);
+        let mut garbage = self.chain.convert_to_garbage();
+        if self.incoming_garbage < garbage {
+            garbage -= self.incoming_garbage;
+            self.incoming_garbage = 0;
+        } else {
+            self.incoming_garbage -= garbage;
+            garbage = 0;
+        }
+        self.outgoing_garbage += garbage;
+
+        return false;
     }
 
     fn spawn_garbage(&mut self) -> bool {
@@ -391,6 +405,10 @@ impl Game {
     }
 
     fn spawn_puyo(&mut self) -> bool {
+        if self.board[DROP_POS.y as usize][DROP_POS.x as usize] != Empty {
+            self.is_over = true;
+            return true;
+        }
         let colors = std::mem::replace(
             &mut self.next, Puyo::from_excluded(self.excluded_color));
         let pos = Puyo::<Coord>::new(

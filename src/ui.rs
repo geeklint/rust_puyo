@@ -15,7 +15,7 @@ pub enum Button {
 pub struct UI {
     old_settings: libc::termios,
     next_frame: libc::timespec,
-    buttons: Vec<Button>,
+    buttons: Vec<(u8, Button)>,
 }
 
 impl UI {
@@ -51,7 +51,7 @@ impl UI {
         }
     }
 
-    pub fn buttons(&self) -> &[Button] {
+    pub fn buttons(&self) -> &[(u8, Button)] {
         self.buttons.as_slice()
     }
 
@@ -111,10 +111,10 @@ impl UI {
             if escseq {
                 escseq = false;
                 button_pressed = match ch {
-                    'A' => Button::Up,
-                    'B' => Button::Down,
-                    'C' => Button::Right,
-                    'D' => Button::Left,
+                    'A' => (2, Button::Up),
+                    'B' => (2, Button::Down),
+                    'C' => (2, Button::Right),
+                    'D' => (2, Button::Left),
                     _ => continue,
                 }
             } else {
@@ -127,7 +127,12 @@ impl UI {
                     'q' => {
                         return false;
                     }
-                    ' ' => Button::Rotate,
+                    ' ' => (1, Button::Rotate),
+                    'w' => (1, Button::Up),
+                    'a' => (1, Button::Left),
+                    's' => (1, Button::Down),
+                    'd' => (1, Button::Right),
+                    '\r' | '\n' => (2, Button::Rotate),
                     _ => continue,
                 }
             }

@@ -5,6 +5,7 @@ use super::color::Color;
 
 const POINTS_PER_GARBAGE: u32 = 70;
 
+#[derive(Debug)]
 pub struct ChainTracker {
     total_cleared: u32,
     num_chains: u32,
