@@ -18,6 +18,7 @@ pub use util::Direction;
 
 pub struct Game {
     is_over: bool,
+    tick_num: u32,
     front_board: Vec<Vec<Color>>,
     board: Vec<Vec<Color>>,
     excluded_color: Color,
@@ -42,6 +43,7 @@ impl Game {
         let excluded_color = Color::any(&mut rng);
         Game {
             is_over: false,
+            tick_num: 50,
             front_board: vec![vec![excluded_color; BOARD_WIDTH]; BOARD_HEIGHT],
             board: vec![vec![Empty; BOARD_WIDTH]; BOARD_HEIGHT],
             excluded_color,
@@ -111,9 +113,13 @@ impl Game {
         return value;
     }
 
-    pub fn tick(&mut self, full: bool){
-        if self.is_over() {
+    pub fn tick(&mut self){
+        if self.is_over {
             return;
+        }
+        self.tick_num += 1;
+        if self.tick_num > 50 {
+            self.tick_num = 0;
         }
         if self.check_motion() {
             return;
@@ -121,7 +127,10 @@ impl Game {
         if self.check_rotation() {
             return;
         }
-        if self.check_drop(full) {
+        if self.check_drop(self.tick_num == 0) {
+            return;
+        }
+        if (self.tick_num & 0b11) != 0 {
             return;
         }
         if self.check_gravity() {

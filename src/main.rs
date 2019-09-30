@@ -85,8 +85,6 @@ fn main() {
 
     let mut ui = UI::init();
 
-    let mut count = 61;
-
     while ui.frame() {
         if game1.is_over() {
             print!("\x1b[2;2H\x1b[30;47mGAME OVER");
@@ -115,14 +113,8 @@ fn main() {
             game.move_(motion);
         }
 
-        count += 1;
-        let mut full = false;
-        if count > 50 {
-            count = 0;
-            full = true;
-        }
-        game1.tick(full);
-        game2.tick(full);
+        game1.tick();
+        game2.tick();
         game1.add_garbage(game2.get_garbage());
         game2.add_garbage(game1.get_garbage());
 
