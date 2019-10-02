@@ -130,7 +130,7 @@ impl Game {
         if self.check_drop(self.tick_num == 0) {
             return;
         }
-        if (self.tick_num & 0b11) != 0 {
+        if (self.tick_num % 25) == 0 {
             return;
         }
         if self.check_gravity() {
