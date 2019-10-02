@@ -1,5 +1,5 @@
 [package]
-name = "puyo_rust"
+name = "puyo_game"
 version = "0.1.0"
 authors = ["Violet <violet@geeklint.com>"]
 edition = "2018"
@@ -8,4 +8,3 @@ edition = "2018"
 
 [dependencies]
 rand = "0.7.2"
-libc = "0.2"
