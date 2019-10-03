@@ -30,6 +30,7 @@ pub struct Game {
     motion: Direction,
     rotate: Rotation,
     outgoing_garbage: u32,
+    hold_garbage: bool,
 }
 
 pub const BOARD_WIDTH: usize = 6;
@@ -39,8 +40,8 @@ const GARBAGE_COLUMNS: [usize; 6] = [0, 3, 2, 5, 1, 4];
 
 impl Game {
     pub fn new() -> Game {
-        let mut rng = rand::thread_rng();
-        let excluded_color = Color::any(&mut rng);
+        //let mut rng = rand::thread_rng();
+        let excluded_color = Color::Violet;
         Game {
             is_over: false,
             tick_num: 50,
@@ -55,6 +56,7 @@ impl Game {
             motion: Direction::None,
             rotate: Rotation::None,
             outgoing_garbage: 0,
+            hold_garbage: false,
         }
     }
 
@@ -103,6 +105,10 @@ impl Game {
         self.incoming_garbage
     }
 
+    pub fn score(&self) -> u32 {
+        self.chain.score()
+    }
+
     pub fn add_garbage(&mut self, amount: u32){
         self.incoming_garbage += amount;
     }
@@ -130,7 +136,7 @@ impl Game {
         if self.check_drop(self.tick_num == 0) {
             return;
         }
-        if (self.tick_num % 25) == 0 {
+        if (self.tick_num % 35) == 0 {
             return;
         }
         if self.check_gravity() {
@@ -392,9 +398,15 @@ impl Game {
     }
 
     fn spawn_garbage(&mut self) -> bool {
-        let mut did_something = false;
+        if self.hold_garbage {
+            self.hold_garbage = false;
+            return false;
+        }
         let mut full_columns = 0;
-        while self.incoming_garbage > 0 && full_columns < BOARD_WIDTH {
+        let mut amount_spawned = 0;
+        while (self.incoming_garbage > 0
+               && amount_spawned < 30
+               && full_columns < BOARD_WIDTH) {
             let x = GARBAGE_COLUMNS[self.garbage_column_index];
             for y in (0..BOARD_HEIGHT).rev(){
                 match self.board[y][x] {
@@ -402,7 +414,7 @@ impl Game {
                     Empty => {
                         self.board[y][x] = Garbage;
                         self.incoming_garbage -= 1;
-                        did_something = true;
+                        amount_spawned += 1;
                         break;
                     }
                     _ => {
@@ -414,7 +426,10 @@ impl Game {
             self.garbage_column_index = (
                 (self.garbage_column_index + 1) % GARBAGE_COLUMNS.len());
         }
-        return did_something;
+        if amount_spawned > 29 {
+            self.hold_garbage = true;
+        }
+        return amount_spawned > 0;
     }
 
     fn spawn_puyo(&mut self) -> bool {

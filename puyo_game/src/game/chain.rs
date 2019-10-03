@@ -7,6 +7,7 @@ const POINTS_PER_GARBAGE: u32 = 70;
 
 #[derive(Debug)]
 pub struct ChainTracker {
+    total_score: u32,
     total_cleared: u32,
     num_chains: u32,
     colors: HashSet<Color>,
@@ -17,6 +18,7 @@ pub struct ChainTracker {
 impl ChainTracker {
     pub fn new() -> Self {
         ChainTracker {
+            total_score: 0,
             total_cleared: 0,
             num_chains: 0,
             colors: HashSet::new(),
@@ -42,6 +44,10 @@ impl ChainTracker {
         self.num_chains += 1;
     }
 
+    pub fn score(&self) -> u32 {
+        self.total_score + self.get_score()
+    }
+
     pub fn convert_to_garbage(&mut self) -> u32 {
         if self.total_cleared == 0 {
             return 0;
@@ -53,6 +59,7 @@ impl ChainTracker {
         self.colors.clear();
         self.group_bonus = 0;
         self.leftover = score % POINTS_PER_GARBAGE;
+        self.total_score += score;
         return garbage;
     }
 
@@ -65,6 +72,7 @@ impl ChainTracker {
             8 * (2u32).pow(self.num_chains - 2)
         };
         let color_bonus = match self.colors.len() {
+            0 => 0,
             1 => 0,
             2 => 3,
             3 => 6,
